@@ -48,6 +48,7 @@
   },
   "homepage": "https://github.com/davidkpiano/xstate/tree/master/packages/core#readme",
   "devDependencies": {
+    "@ampproject/rollup-plugin-closure-compiler": "^0.26.0",
     "@babel/cli": "^7.10.5",
     "@babel/core": "^7.10.5",
     "@scion-scxml/test-framework": "^2.0.15",

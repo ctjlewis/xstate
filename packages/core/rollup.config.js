@@ -2,6 +2,7 @@ import typescript from 'rollup-plugin-typescript2';
 import { terser } from 'rollup-plugin-terser';
 import rollupReplace from 'rollup-plugin-replace';
 import fileSize from 'rollup-plugin-filesize';
+import ClosureCompiler from '@ampproject/rollup-plugin-closure-compiler';
 
 const createTsPlugin = ({ declaration = true, target } = {}) =>
   typescript({
@@ -29,10 +30,20 @@ const createUmdConfig = ({ input, output, target = undefined }) => ({
       'process.env.NODE_ENV': JSON.stringify('production')
     }),
     createTsPlugin({ declaration: false, target }),
-    terser({
-      toplevel: true
+    ClosureCompiler({
+      /**
+       * Use the full compression power of the Closure Compiler, support latest
+       * features for input, and output ES2015.
+       */
+      compilation_level: 'ADVANCED',
+      language_in: 'ES_NEXT',
+      language_out: 'ECMASCRIPT_2015',
+      /**
+       * Try to guarantee a compile, i.e., exit 0.
+       */
+      jscomp_off: ['*']
     }),
-    fileSize()
+    fileSize({ showBrotli: true })
   ]
 });
 
