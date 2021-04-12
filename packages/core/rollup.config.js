@@ -43,7 +43,7 @@ const createUmdConfig = ({ input, output, target = undefined }) => ({
        */
       jscomp_off: ['*']
     }),
-    fileSize({ showBrotli: true })
+    fileSize({ showBrotliSize: true })
   ]
 });
 
