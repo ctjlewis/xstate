@@ -1,49 +1,72 @@
 import typescript from 'rollup-plugin-typescript2';
-import { terser } from 'rollup-plugin-terser';
 import rollupReplace from 'rollup-plugin-replace';
 import fileSize from 'rollup-plugin-filesize';
 import ClosureCompiler from '@ampproject/rollup-plugin-closure-compiler';
+import { terser } from 'rollup-plugin-terser';
 
-const createTsPlugin = ({ declaration = true, target } = {}) =>
+const closureCompilerDefaults = {
+  /**
+   * Configure the compiler to use max compression.
+   */
+  compilation_level: 'ADVANCED',
+  /**
+   * Support latest features and output ES2015.
+   */
+  language_in: 'ES_NEXT',
+  language_out: 'ECMASCRIPT_2015',
+  /**
+   * Try to guarantee a compile, i.e., exit 0.
+   */
+  jscomp_warning: ['*']
+};
+
+const createClosureCompiler = ({ ...closureCompilerOverrides } = {}) => {
+  // return terser({ toplevel: true });
+  return ClosureCompiler({
+    ...closureCompilerDefaults,
+    ...closureCompilerOverrides
+  });
+};
+
+const createTsPlugin = ({ declaration = true, ...tsOverrides } = {}) =>
   typescript({
     clean: true,
     tsconfigOverride: {
       compilerOptions: {
         declaration,
-        ...(target && { target })
+        ...tsOverrides
       }
     }
   });
 
-const createNpmConfig = ({ input, output }) => ({
+const createNpmConfig = ({ input, output, ...tsOverrides }) => ({
   input,
   output,
   preserveModules: true,
-  plugins: [createTsPlugin()]
+  plugins: [
+    createTsPlugin({
+      ...tsOverrides
+    }),
+    createClosureCompiler()
+  ]
 });
 
-const createUmdConfig = ({ input, output, target = undefined }) => ({
+const createUmdConfig = ({ input, output, ...tsOverrides }) => ({
   input,
   output,
   plugins: [
+    createTsPlugin({
+      declaration: false,
+      ...tsOverrides
+    }),
     rollupReplace({
       'process.env.NODE_ENV': JSON.stringify('production')
     }),
-    createTsPlugin({ declaration: false, target }),
-    ClosureCompiler({
-      /**
-       * Use the full compression power of the Closure Compiler, support latest
-       * features for input, and output ES2015.
-       */
-      compilation_level: 'ADVANCED',
-      language_in: 'ES_NEXT',
-      language_out: 'ECMASCRIPT_2015',
-      /**
-       * Try to guarantee a compile, i.e., exit 0.
-       */
-      jscomp_off: ['*']
-    }),
-    fileSize({ showBrotliSize: true })
+    createClosureCompiler(),
+    fileSize({
+      showBeforeSizes: 'release',
+      showBrotliSize: true
+    })
   ]
 });
 
